@@ -67,8 +67,10 @@ type batchCommandsEntry struct {
 	// It's different from the address the request sent to.
 	forwardedHost string
 	// canceled indicated the request is canceled or not.
-	canceled int32
-	err      error
+	canceled  int32
+	err       error
+	beginTime time.Time
+	endTime   time.Time
 }
 
 func (b *batchCommandsEntry) isCanceled() bool {
@@ -107,6 +109,7 @@ func (b *batchCommandsBuilder) push(entry *batchCommandsEntry) {
 func (b *batchCommandsBuilder) build(
 	collect func(id uint64, e *batchCommandsEntry),
 ) (*tikvpb.BatchCommandsRequest, map[string]*tikvpb.BatchCommandsRequest) {
+	start := time.Now()
 	for _, e := range b.entries {
 		if e.isCanceled() {
 			continue
@@ -126,6 +129,7 @@ func (b *batchCommandsBuilder) build(
 			batchReq.RequestIds = append(batchReq.RequestIds, b.idAlloc)
 			batchReq.Requests = append(batchReq.Requests, e.req)
 		}
+		e.beginTime = start
 		b.idAlloc++
 	}
 	var req *tikvpb.BatchCommandsRequest
@@ -631,6 +635,7 @@ func (c *batchCommandsClient) batchRecvLoop(cfg config.TiKVClient, tikvTransport
 				continue
 			}
 			entry := value.(*batchCommandsEntry)
+			entry.endTime = time.Now()
 
 			if trace.IsEnabled() {
 				trace.Log(entry.ctx, "rpc", "received")
@@ -760,6 +765,8 @@ func sendBatchRequest(
 	req *tikvpb.BatchCommandsRequest_Request,
 	timeout time.Duration,
 ) (*tikvrpc.Response, error) {
+	stmtExec := ctx.Value(util.ExecDetailsKey)
+
 	entry := &batchCommandsEntry{
 		ctx:           ctx,
 		req:           req,
@@ -787,6 +794,10 @@ func sendBatchRequest(
 	case res, ok := <-entry.res:
 		if !ok {
 			return nil, errors.WithStack(entry.err)
+		}
+		if stmtExec != nil {
+			detail := stmtExec.(*util.ExecDetails)
+			atomic.AddInt64(&detail.RequestRPCTime, int64(entry.endTime.Sub(entry.beginTime)))
 		}
 		return tikvrpc.FromBatchCommandsResponse(res)
 	case <-ctx.Done():

@@ -165,6 +165,7 @@ type ExecDetails struct {
 	BackoffDuration    int64
 	WaitKVRespDuration int64
 	WaitPDRespDuration int64
+	RequestRPCTime     int64
 }
 
 // FormatDuration uses to format duration, this function will prune precision before format duration.
