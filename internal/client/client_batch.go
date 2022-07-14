@@ -797,7 +797,10 @@ func sendBatchRequest(
 		}
 		if stmtExec != nil {
 			detail := stmtExec.(*util.ExecDetails)
-			atomic.AddInt64(&detail.RequestRPCTime, int64(entry.endTime.Sub(entry.beginTime)))
+			rpcTime := int64(entry.endTime.Sub(entry.beginTime))
+			if rpcTime > atomic.LoadInt64(&detail.RequestRPCTime) {
+				atomic.StoreInt64(&detail.RequestRPCTime, rpcTime)
+			}
 		}
 		return tikvrpc.FromBatchCommandsResponse(res)
 	case <-ctx.Done():
