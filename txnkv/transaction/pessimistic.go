@@ -149,6 +149,7 @@ func (action actionPessimisticLock) handleSingleBatch(c *twoPhaseCommitter, bo *
 		if action.LockCtx.Stats != nil {
 			atomic.AddInt64(&action.LockCtx.Stats.LockRPCTime, int64(time.Since(startTime)))
 			atomic.AddInt64(&action.LockCtx.Stats.LockRPCCount, 1)
+			atomic.AddInt64(&action.LockCtx.Stats.LockTiKVTime, int64(resp.Resp.(*kvrpcpb.PessimisticLockResponse).ExecDetailsV2.TimeDetail.TotalRpcWallTimeNs))
 		}
 		if err != nil {
 			return err

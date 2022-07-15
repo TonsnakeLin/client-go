@@ -127,6 +127,7 @@ type LockKeysDetails struct {
 	}
 	LockRPCTime  int64
 	LockRPCCount int64
+	LockTiKVTime int64
 	RetryCount   int
 }
 
@@ -139,6 +140,7 @@ func (ld *LockKeysDetails) Merge(lockKey *LockKeysDetails) {
 	ld.BackoffTime += lockKey.BackoffTime
 	ld.LockRPCTime += lockKey.LockRPCTime
 	ld.LockRPCCount += ld.LockRPCCount
+	ld.LockTiKVTime += lockKey.LockTiKVTime
 	ld.Mu.BackoffTypes = append(ld.Mu.BackoffTypes, lockKey.Mu.BackoffTypes...)
 	ld.RetryCount++
 }
@@ -154,6 +156,7 @@ func (ld *LockKeysDetails) Clone() *LockKeysDetails {
 		LockRPCCount: ld.LockRPCCount,
 		RetryCount:   ld.RetryCount,
 		ResolveLock:  ld.ResolveLock,
+		LockTiKVTime: ld.LockTiKVTime,
 	}
 	lock.Mu.BackoffTypes = append([]string{}, ld.Mu.BackoffTypes...)
 	return lock
