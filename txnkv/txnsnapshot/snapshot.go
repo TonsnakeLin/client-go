@@ -118,6 +118,7 @@ type KVSnapshot struct {
 	resolvedLocks   util.TSSet
 	committedLocks  util.TSSet
 	scanBatchSize   int
+	getRequestMeta  []byte
 
 	// Cache the result of BatchGet.
 	// The invariance is that calling BatchGet multiple times using the same start ts,
@@ -577,6 +578,7 @@ func (s *KVSnapshot) get(ctx context.Context, bo *retry.Backoffer, k []byte) ([]
 		&kvrpcpb.GetRequest{
 			Key:     k,
 			Version: s.version,
+			Meta:    s.getRequestMeta,
 		}, s.mu.replicaRead, &s.replicaReadSeed, kvrpcpb.Context{
 			Priority:         s.priority.ToPB(),
 			NotFillCache:     s.notFillCache,
@@ -830,6 +832,11 @@ func (s *KVSnapshot) SetResourceGroupTagger(tagger tikvrpc.ResourceGroupTagger) 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.mu.resourceGroupTagger = tagger
+}
+
+// SetResourceGroupTag sets resource group tag of the kv request.
+func (s *KVSnapshot) SetUseRpcChunk(meta []byte) {
+	s.getRequestMeta = meta
 }
 
 // SetRPCInterceptor sets interceptor.RPCInterceptor for the snapshot.
