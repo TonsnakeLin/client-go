@@ -758,6 +758,7 @@ func sendBatchRequest(
 	forwardedHost string,
 	batchConn *batchConn,
 	req *tikvpb.BatchCommandsRequest_Request,
+	reqType string,
 	timeout time.Duration,
 ) (*tikvrpc.Response, error) {
 	entry := &batchCommandsEntry{
@@ -786,7 +787,7 @@ func sendBatchRequest(
 	startWait := time.Now()
 	defer func() {
 		elapsed := time.Since(startWait)
-		metrics.TiKVBatchWaitDuration.Observe(float64(elapsed.Milliseconds()))
+		metrics.TiKVBatchWaitDurationHistogram.WithLabelValues(reqType).Observe(float64(elapsed.Milliseconds()))
 	}()
 	select {
 	case res, ok := <-entry.res:

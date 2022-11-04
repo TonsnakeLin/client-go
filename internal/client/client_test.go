@@ -104,10 +104,10 @@ func TestCancelTimeoutRetErr(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 	cancel()
-	_, err := sendBatchRequest(ctx, "", "", a, req, 2*time.Second)
+	_, err := sendBatchRequest(ctx, "", "", a, req, "", 2*time.Second)
 	assert.Equal(t, errors.Cause(err), context.Canceled)
 
-	_, err = sendBatchRequest(context.Background(), "", "", a, req, 0)
+	_, err = sendBatchRequest(context.Background(), "", "", a, req, "", 0)
 	assert.Equal(t, errors.Cause(err), context.DeadlineExceeded)
 }
 
