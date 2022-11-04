@@ -781,8 +781,10 @@ func sendBatchRequest(
 	case <-timer.C:
 		return nil, errors.WithMessage(context.DeadlineExceeded, "wait sendLoop")
 	}
-	metrics.TiKVBatchWaitDuration.Observe(float64(time.Since(start)))
+	metrics.TiKVBatchSendDuration.Observe(float64(time.Since(start)))
 
+	startWait := time.Now()
+	defer metrics.TiKVBatchWaitDuration.Observe(float64(time.Since(startWait)))
 	select {
 	case res, ok := <-entry.res:
 		if !ok {
