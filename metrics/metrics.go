@@ -315,7 +315,7 @@ func initMetrics(namespace, subsystem string) {
 			Namespace: namespace,
 			Subsystem: subsystem,
 			Name:      "batch_wait_duration",
-			Buckets:   prometheus.ExponentialBuckets(1, 2, 34), // 1ns ~ 8s
+			Buckets:   prometheus.ExponentialBuckets(1, 2, 24), // 1us ~ 16s
 			Help:      "batch wait duration",
 		})
 
