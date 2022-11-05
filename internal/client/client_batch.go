@@ -778,6 +778,7 @@ func sendBatchRequest(
 		forwardedHost:      forwardedHost,
 		canceled:           0,
 		sendToSendLoopTime: start,
+		reqType:            reqType,
 		err:                nil,
 	}
 	select {
