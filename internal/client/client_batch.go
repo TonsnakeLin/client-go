@@ -787,7 +787,7 @@ func sendBatchRequest(
 	startWait := time.Now()
 	defer func() {
 		elapsed := time.Since(startWait)
-		metrics.TiKVBatchWaitDurationHistogram.WithLabelValues(reqType).Observe(float64(elapsed.Milliseconds()))
+		metrics.TiKVBatchWaitDurationHistogram.WithLabelValues(reqType).Observe(float64(elapsed.Microseconds()))
 	}()
 	select {
 	case res, ok := <-entry.res:
