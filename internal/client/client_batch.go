@@ -67,8 +67,11 @@ type batchCommandsEntry struct {
 	// It's different from the address the request sent to.
 	forwardedHost string
 	// canceled indicated the request is canceled or not.
-	canceled int32
-	err      error
+	canceled           int32
+	sendToSendLoopTime time.Time
+	sendLoopRecvTime   time.Time
+	reqType            string
+	err                error
 }
 
 func (b *batchCommandsEntry) isCanceled() bool {
@@ -240,6 +243,7 @@ func (a *batchConn) fetchAllPendingRequests(
 		return time.Now()
 	}
 	ts := time.Now()
+	headEntry.sendLoopRecvTime = ts
 	a.reqBuilder.push(headEntry)
 
 	// This loop is for trying best to collect more requests.
@@ -249,6 +253,7 @@ func (a *batchConn) fetchAllPendingRequests(
 			if entry == nil {
 				return ts
 			}
+			entry.sendLoopRecvTime = ts
 			a.reqBuilder.push(entry)
 		default:
 			return ts
@@ -638,6 +643,7 @@ func (c *batchCommandsClient) batchRecvLoop(cfg config.TiKVClient, tikvTransport
 			logutil.Eventf(entry.ctx, "receive %T response with other %d batched requests from %s", responses[i].GetCmd(), len(responses), c.target)
 			if atomic.LoadInt32(&entry.canceled) == 0 {
 				// Put the response only if the request is not canceled.
+				metrics.TiKVBatchWaitResponseHistogram.WithLabelValues(entry.reqType).Observe(float64(time.Since(entry.sendLoopRecvTime).Microseconds()))
 				entry.res <- responses[i]
 			}
 			c.batched.Delete(requestID)
@@ -761,18 +767,19 @@ func sendBatchRequest(
 	reqType string,
 	timeout time.Duration,
 ) (*tikvrpc.Response, error) {
-	entry := &batchCommandsEntry{
-		ctx:           ctx,
-		req:           req,
-		res:           make(chan *tikvpb.BatchCommandsResponse_Response, 1),
-		forwardedHost: forwardedHost,
-		canceled:      0,
-		err:           nil,
-	}
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
 
 	start := time.Now()
+	entry := &batchCommandsEntry{
+		ctx:                ctx,
+		req:                req,
+		res:                make(chan *tikvpb.BatchCommandsResponse_Response, 1),
+		forwardedHost:      forwardedHost,
+		canceled:           0,
+		sendToSendLoopTime: start,
+		err:                nil,
+	}
 	select {
 	case batchConn.batchCommandsCh <- entry:
 	case <-ctx.Done():
