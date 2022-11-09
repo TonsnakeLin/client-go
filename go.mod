@@ -59,4 +59,4 @@ require (
 	stathat.com/c/consistent v1.0.0 // indirect
 )
 
-replace github.com/pingcap/kvproto => github.com/TonsnakeLin/kvproto v0.0.0-20221109010657-caf761597352
+replace github.com/pingcap/kvproto => github.com/TonsnakeLin/kvproto v0.0.0-20221109023054-4798cac35740
