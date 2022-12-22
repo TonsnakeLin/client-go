@@ -110,7 +110,7 @@ var (
 
 // RecordRegionRequestRuntimeStats records request runtime stats.
 func RecordRegionRequestRuntimeStats(stats map[tikvrpc.CmdType]*locate.RPCRuntimeStats, cmd tikvrpc.CmdType, d time.Duration) {
-	locate.RecordRegionRequestRuntimeStats(stats, cmd, d)
+	locate.RecordRegionRequestRuntimeStats(stats, cmd, d, 0, 0, 0)
 }
 
 // Store contains a kv process's address.
