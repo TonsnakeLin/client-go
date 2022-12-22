@@ -592,27 +592,51 @@ func (req *Request) ToBatchCommandsRequest() *tikvpb.BatchCommandsRequest_Reques
 
 // Response wraps all kv/coprocessor responses.
 type Response struct {
-	Resp interface{}
+	Resp              interface{}
+	BatchRecvReq      int64
+	BatchSendReq      int64
+	RecvRespFromBatch int64
 }
 
 // FromBatchCommandsResponse converts a BatchCommands response to Response.
-func FromBatchCommandsResponse(res *tikvpb.BatchCommandsResponse_Response) (*Response, error) {
+func FromBatchCommandsResponse(res *tikvpb.BatchCommandsResponse_Response,
+	batchRecvReq, batchSendReq, recvRespFromBatch int64) (*Response, error) {
 	if res.GetCmd() == nil {
 		return nil, errors.New("Unknown command response")
 	}
 	switch res := res.GetCmd().(type) {
 	case *tikvpb.BatchCommandsResponse_Response_Get:
-		return &Response{Resp: res.Get}, nil
+		return &Response{Resp: res.Get,
+			BatchRecvReq:      batchRecvReq,
+			BatchSendReq:      batchSendReq,
+			RecvRespFromBatch: recvRespFromBatch,
+		}, nil
 	case *tikvpb.BatchCommandsResponse_Response_Scan:
-		return &Response{Resp: res.Scan}, nil
+		return &Response{Resp: res.Scan,
+			BatchRecvReq:      batchRecvReq,
+			BatchSendReq:      batchSendReq,
+			RecvRespFromBatch: recvRespFromBatch,
+		}, nil
 	case *tikvpb.BatchCommandsResponse_Response_Prewrite:
-		return &Response{Resp: res.Prewrite}, nil
+		return &Response{Resp: res.Prewrite,
+			BatchRecvReq:      batchRecvReq,
+			BatchSendReq:      batchSendReq,
+			RecvRespFromBatch: recvRespFromBatch,
+		}, nil
 	case *tikvpb.BatchCommandsResponse_Response_Commit:
-		return &Response{Resp: res.Commit}, nil
+		return &Response{Resp: res.Commit,
+			BatchRecvReq:      batchRecvReq,
+			BatchSendReq:      batchSendReq,
+			RecvRespFromBatch: recvRespFromBatch,
+		}, nil
 	case *tikvpb.BatchCommandsResponse_Response_Cleanup:
 		return &Response{Resp: res.Cleanup}, nil
 	case *tikvpb.BatchCommandsResponse_Response_BatchGet:
-		return &Response{Resp: res.BatchGet}, nil
+		return &Response{Resp: res.BatchGet,
+			BatchRecvReq:      batchRecvReq,
+			BatchSendReq:      batchSendReq,
+			RecvRespFromBatch: recvRespFromBatch,
+		}, nil
 	case *tikvpb.BatchCommandsResponse_Response_BatchRollback:
 		return &Response{Resp: res.BatchRollback}, nil
 	case *tikvpb.BatchCommandsResponse_Response_ScanLock:
@@ -644,9 +668,17 @@ func FromBatchCommandsResponse(res *tikvpb.BatchCommandsResponse_Response) (*Res
 	case *tikvpb.BatchCommandsResponse_Response_RawScan:
 		return &Response{Resp: res.RawScan}, nil
 	case *tikvpb.BatchCommandsResponse_Response_Coprocessor:
-		return &Response{Resp: res.Coprocessor}, nil
+		return &Response{Resp: res.Coprocessor,
+			BatchRecvReq:      batchRecvReq,
+			BatchSendReq:      batchSendReq,
+			RecvRespFromBatch: recvRespFromBatch,
+		}, nil
 	case *tikvpb.BatchCommandsResponse_Response_PessimisticLock:
-		return &Response{Resp: res.PessimisticLock}, nil
+		return &Response{Resp: res.PessimisticLock,
+			BatchRecvReq:      batchRecvReq,
+			BatchSendReq:      batchSendReq,
+			RecvRespFromBatch: recvRespFromBatch,
+		}, nil
 	case *tikvpb.BatchCommandsResponse_Response_PessimisticRollback:
 		return &Response{Resp: res.PessimisticRollback}, nil
 	case *tikvpb.BatchCommandsResponse_Response_Empty:

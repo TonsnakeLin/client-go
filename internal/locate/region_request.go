@@ -126,6 +126,10 @@ type RPCRuntimeStats struct {
 	Count int64
 	// Send region request consume time.
 	Consume int64
+
+	BatchRecvReq      int64
+	BatchSendReq      int64
+	RecvRespFromBatch int64
 }
 
 // String implements fmt.Stringer interface.
@@ -141,6 +145,12 @@ func (r *RegionRequestRuntimeStats) String() string {
 		builder.WriteString(strconv.FormatInt(v.Count, 10))
 		builder.WriteString(", total_time:")
 		builder.WriteString(util.FormatDuration(time.Duration(v.Consume)))
+		builder.WriteString(", batch_recv_time:")
+		builder.WriteString(util.FormatDuration(time.Duration(v.BatchRecvReq)))
+		builder.WriteString(", batch_send_time:")
+		builder.WriteString(util.FormatDuration(time.Duration(v.BatchSendReq)))
+		builder.WriteString(", recv_resp_from_batch:")
+		builder.WriteString(util.FormatDuration(time.Duration(v.RecvRespFromBatch)))
 		builder.WriteString("}")
 	}
 	return builder.String()
@@ -151,8 +161,11 @@ func (r *RegionRequestRuntimeStats) Clone() RegionRequestRuntimeStats {
 	newRs := NewRegionRequestRuntimeStats()
 	for cmd, v := range r.Stats {
 		newRs.Stats[cmd] = &RPCRuntimeStats{
-			Count:   v.Count,
-			Consume: v.Consume,
+			Count:             v.Count,
+			Consume:           v.Consume,
+			BatchRecvReq:      v.BatchRecvReq,
+			BatchSendReq:      v.BatchSendReq,
+			RecvRespFromBatch: v.RecvRespFromBatch,
 		}
 	}
 	return newRs
@@ -171,21 +184,31 @@ func (r *RegionRequestRuntimeStats) Merge(rs RegionRequestRuntimeStats) {
 		}
 		stat.Count += v.Count
 		stat.Consume += v.Consume
+		stat.BatchRecvReq += v.BatchRecvReq
+		stat.BatchSendReq += v.BatchSendReq
+		stat.RecvRespFromBatch += v.RecvRespFromBatch
 	}
 }
 
 // RecordRegionRequestRuntimeStats records request runtime stats.
-func RecordRegionRequestRuntimeStats(stats map[tikvrpc.CmdType]*RPCRuntimeStats, cmd tikvrpc.CmdType, d time.Duration) {
+func RecordRegionRequestRuntimeStats(stats map[tikvrpc.CmdType]*RPCRuntimeStats, cmd tikvrpc.CmdType,
+	d time.Duration, batchRecvReq, batchSendReq, recvRespFromBatch int64) {
 	stat, ok := stats[cmd]
 	if !ok {
 		stats[cmd] = &RPCRuntimeStats{
-			Count:   1,
-			Consume: int64(d),
+			Count:             1,
+			Consume:           int64(d),
+			BatchRecvReq:      batchRecvReq,
+			BatchSendReq:      batchSendReq,
+			RecvRespFromBatch: recvRespFromBatch,
 		}
 		return
 	}
 	stat.Count++
 	stat.Consume += int64(d)
+	stat.BatchRecvReq += batchRecvReq
+	stat.BatchSendReq += batchSendReq
+	stat.RecvRespFromBatch += recvRespFromBatch
 }
 
 // NewRegionRequestSender creates a new sender.
@@ -264,8 +287,9 @@ type replicaSelector struct {
 // selectorState is the interface of states of the replicaSelector.
 // Here is the main state transition diagram:
 //
-//                                    exceeding maxReplicaAttempt
-//           +-------------------+   || RPC failure && unreachable && no forwarding
+//	                         exceeding maxReplicaAttempt
+//	+-------------------+   || RPC failure && unreachable && no forwarding
+//
 // +-------->+ accessKnownLeader +----------------+
 // |         +------+------------+                |
 // |                |                             |
@@ -282,7 +306,8 @@ type replicaSelector struct {
 // | leader becomes   v                           +---+---+
 // | reachable  +-----+-----+ all proxies are tried   ^
 // +------------+tryNewProxy+-------------------------+
-//              +-----------+
+//
+//	+-----------+
 type selectorState interface {
 	next(*retry.Backoffer, *replicaSelector) (*RPCContext, error)
 	onSendSuccess(*replicaSelector)
@@ -1193,7 +1218,8 @@ func (s *RegionRequestSender) sendReqToRegion(bo *retry.Backoffer, rpcCtx *RPCCo
 		start := time.Now()
 		resp, err = s.client.SendRequest(ctx, sendToAddr, req, timeout)
 		if s.Stats != nil {
-			RecordRegionRequestRuntimeStats(s.Stats, req.Type, time.Since(start))
+			RecordRegionRequestRuntimeStats(s.Stats, req.Type, time.Since(start),
+				resp.BatchRecvReq, resp.BatchSendReq, resp.RecvRespFromBatch)
 			if val, fpErr := util.EvalFailpoint("tikvStoreRespResult"); fpErr == nil {
 				if val.(bool) {
 					if req.Type == tikvrpc.CmdCop && bo.GetTotalSleep() == 0 {

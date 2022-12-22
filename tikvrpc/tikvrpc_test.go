@@ -43,7 +43,7 @@ import (
 
 func TestBatchResponse(t *testing.T) {
 	resp := &tikvpb.BatchCommandsResponse_Response{}
-	batchResp, err := FromBatchCommandsResponse(resp)
+	batchResp, err := FromBatchCommandsResponse(resp, 0, 0, 0)
 	assert.Nil(t, batchResp)
 	assert.NotNil(t, err)
 }
