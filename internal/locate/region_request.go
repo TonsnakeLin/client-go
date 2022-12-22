@@ -177,8 +177,11 @@ func (r *RegionRequestRuntimeStats) Merge(rs RegionRequestRuntimeStats) {
 		stat, ok := r.Stats[cmd]
 		if !ok {
 			r.Stats[cmd] = &RPCRuntimeStats{
-				Count:   v.Count,
-				Consume: v.Consume,
+				Count:             v.Count,
+				Consume:           v.Consume,
+				BatchRecvReq:      v.BatchRecvReq,
+				BatchSendReq:      v.BatchSendReq,
+				RecvRespFromBatch: v.RecvRespFromBatch,
 			}
 			continue
 		}
