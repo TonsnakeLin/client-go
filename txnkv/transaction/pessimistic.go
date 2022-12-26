@@ -253,7 +253,9 @@ func (action actionPessimisticLock) handleKeyError(c *twoPhaseCommitter, keyErrs
 	return locks, false, nil
 }
 
-func (action actionPessimisticLock) handlePessimisticLockResponseNormalMode(c *twoPhaseCommitter, bo *retry.Backoffer, batch *batchMutations, mutationsPb []*kvrpcpb.Mutation, resp *tikvrpc.Response, diagCtx *diagnosticContext) (finished bool, err error) {
+func (action actionPessimisticLock) handlePessimisticLockResponseNormalMode(c *twoPhaseCommitter,
+	bo *retry.Backoffer, batch *batchMutations, mutationsPb []*kvrpcpb.Mutation, resp *tikvrpc.Response,
+	diagCtx *diagnosticContext) (finished bool, err error) {
 	regionErr, err := resp.GetRegionError()
 	if err != nil {
 		return true, err
@@ -273,7 +275,8 @@ func (action actionPessimisticLock) handlePessimisticLockResponseNormalMode(c *t
 	if len(keyErrs) == 0 {
 
 		if action.LockCtx.Stats != nil {
-			action.LockCtx.Stats.MergeReqDetails(diagCtx.reqDuration, batch.region.GetID(), diagCtx.sender.GetStoreAddr(), lockResp.ExecDetailsV2)
+			action.LockCtx.Stats.MergeReqDetails(diagCtx.reqDuration, batch.region.GetID(),
+				diagCtx.sender.GetStoreAddr(), lockResp.ExecDetailsV2, resp.BatchRecvReq, resp.BatchSendReq, resp.RecvRespFromBatch)
 		}
 
 		if batch.isPrimary {
@@ -350,7 +353,9 @@ func (action actionPessimisticLock) handlePessimisticLockResponseNormalMode(c *t
 	return false, nil
 }
 
-func (action actionPessimisticLock) handlePessimisticLockResponseForceLockMode(c *twoPhaseCommitter, bo *retry.Backoffer, batch *batchMutations, mutationsPb []*kvrpcpb.Mutation, resp *tikvrpc.Response, diagCtx *diagnosticContext) (finished bool, err error) {
+func (action actionPessimisticLock) handlePessimisticLockResponseForceLockMode(c *twoPhaseCommitter,
+	bo *retry.Backoffer, batch *batchMutations, mutationsPb []*kvrpcpb.Mutation, resp *tikvrpc.Response,
+	diagCtx *diagnosticContext) (finished bool, err error) {
 	regionErr, err := resp.GetRegionError()
 	if err != nil {
 		return true, err
@@ -412,7 +417,8 @@ func (action actionPessimisticLock) handlePessimisticLockResponseForceLockMode(c
 
 	if len(lockResp.Results) > 0 && !isMutationFailed {
 		if action.LockCtx.Stats != nil {
-			action.LockCtx.Stats.MergeReqDetails(diagCtx.reqDuration, batch.region.GetID(), diagCtx.sender.GetStoreAddr(), lockResp.ExecDetailsV2)
+			action.LockCtx.Stats.MergeReqDetails(diagCtx.reqDuration, batch.region.GetID(),
+				diagCtx.sender.GetStoreAddr(), lockResp.ExecDetailsV2, resp.BatchRecvReq, resp.BatchSendReq, resp.RecvRespFromBatch)
 		}
 	}
 

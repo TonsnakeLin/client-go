@@ -246,11 +246,14 @@ type LockKeysDetails struct {
 	BackoffTime int64
 	Mu          struct {
 		sync.Mutex
-		BackoffTypes        []string
-		SlowestReqTotalTime time.Duration
-		SlowestRegion       uint64
-		SlowestStoreAddr    string
-		SlowestExecDetails  TiKVExecDetails
+		BackoffTypes             []string
+		SlowestReqTotalTime      time.Duration
+		SlowestRegion            uint64
+		SlowestStoreAddr         string
+		SlowestExecDetails       TiKVExecDetails
+		SlowestBatchRecvReq      int64
+		SlowestBatchSendReq      int64
+		SlowestRecvRespFromBatch int64
 	}
 	LockRPCTime  int64
 	LockRPCCount int64
@@ -273,11 +276,15 @@ func (ld *LockKeysDetails) Merge(lockKey *LockKeysDetails) {
 		ld.Mu.SlowestRegion = lockKey.Mu.SlowestRegion
 		ld.Mu.SlowestStoreAddr = lockKey.Mu.SlowestStoreAddr
 		ld.Mu.SlowestExecDetails = lockKey.Mu.SlowestExecDetails
+		ld.Mu.SlowestBatchRecvReq = lockKey.Mu.SlowestBatchRecvReq
+		ld.Mu.SlowestBatchSendReq = lockKey.Mu.SlowestBatchSendReq
+		ld.Mu.SlowestRecvRespFromBatch = lockKey.Mu.SlowestRecvRespFromBatch
 	}
 }
 
 // MergeReqDetails merges ExecDetailsV2 into the current LockKeysDetails.
-func (ld *LockKeysDetails) MergeReqDetails(reqDuration time.Duration, regionID uint64, addr string, execDetails *kvrpcpb.ExecDetailsV2) {
+func (ld *LockKeysDetails) MergeReqDetails(reqDuration time.Duration, regionID uint64,
+	addr string, execDetails *kvrpcpb.ExecDetailsV2, batchRecvReq, batchSendReq, recvRespFromBatch int64) {
 	if ld == nil {
 		return
 	}
@@ -288,6 +295,9 @@ func (ld *LockKeysDetails) MergeReqDetails(reqDuration time.Duration, regionID u
 		ld.Mu.SlowestRegion = regionID
 		ld.Mu.SlowestStoreAddr = addr
 		ld.Mu.SlowestExecDetails = NewTiKVExecDetails(execDetails)
+		ld.Mu.SlowestBatchRecvReq = batchRecvReq
+		ld.Mu.SlowestBatchSendReq = batchSendReq
+		ld.Mu.SlowestRecvRespFromBatch = recvRespFromBatch
 	}
 }
 
@@ -308,6 +318,9 @@ func (ld *LockKeysDetails) Clone() *LockKeysDetails {
 	lock.Mu.SlowestRegion = ld.Mu.SlowestRegion
 	lock.Mu.SlowestStoreAddr = ld.Mu.SlowestStoreAddr
 	lock.Mu.SlowestExecDetails = ld.Mu.SlowestExecDetails
+	lock.Mu.SlowestBatchRecvReq = ld.Mu.SlowestBatchRecvReq
+	lock.Mu.SlowestBatchSendReq = ld.Mu.SlowestBatchSendReq
+	lock.Mu.SlowestRecvRespFromBatch = ld.Mu.SlowestRecvRespFromBatch
 	return lock
 }
 
@@ -321,12 +334,12 @@ type ExecDetails struct {
 
 // FormatDuration uses to format duration, this function will prune precision before format duration.
 // Pruning precision is for human readability. The prune rule is:
-// 1. if the duration was less than 1us, return the original string.
-// 2. readable value >=10, keep 1 decimal, otherwise, keep 2 decimal. such as:
-//    9.412345ms  -> 9.41ms
-//    10.412345ms -> 10.4ms
-//    5.999s      -> 6s
-//    100.45µs    -> 100.5µs
+//  1. if the duration was less than 1us, return the original string.
+//  2. readable value >=10, keep 1 decimal, otherwise, keep 2 decimal. such as:
+//     9.412345ms  -> 9.41ms
+//     10.412345ms -> 10.4ms
+//     5.999s      -> 6s
+//     100.45µs    -> 100.5µs
 func FormatDuration(d time.Duration) string {
 	if d <= time.Microsecond {
 		return d.String()
