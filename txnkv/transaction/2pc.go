@@ -93,7 +93,7 @@ type kvstore interface {
 	// GetRegionCache gets the RegionCache.
 	GetRegionCache() *locate.RegionCache
 	// SplitRegions splits regions by splitKeys.
-	SplitRegions(ctx context.Context, splitKeys [][]byte, scatter bool, tableID *int64) (regionIDs []uint64, err error)
+	SplitRegions(ctx context.Context, splitKeys [][]byte, scatter bool, tableID *int64, encrypt bool) (regionIDs []uint64, err error)
 	// WaitScatterRegionFinish implements SplittableStore interface.
 	// backOff is the back off time of the wait scatter region.(Milliseconds)
 	// if backOff <= 0, the default wait scatter back off time will be used.
@@ -895,7 +895,7 @@ func (c *twoPhaseCommitter) preSplitRegion(ctx context.Context, group groupedMut
 		return false
 	}
 
-	regionIDs, err := c.store.SplitRegions(ctx, splitKeys, true, nil)
+	regionIDs, err := c.store.SplitRegions(ctx, splitKeys, true, nil, false)
 	if err != nil {
 		logutil.BgLogger().Warn("2PC split regions failed", zap.Uint64("regionID", group.region.GetID()),
 			zap.Int("keys count", keysLength), zap.Error(err))
