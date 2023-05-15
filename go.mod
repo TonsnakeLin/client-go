@@ -62,4 +62,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/pingcap/kvproto => github.com/TonsnakeLin/kvproto v0.0.0-20230426124139-f36b9fcbe799
+replace github.com/pingcap/kvproto => github.com/TonsnakeLin/kvproto v0.0.0-20230515074903-29d95052ecda
