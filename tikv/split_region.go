@@ -65,7 +65,7 @@ func equalRegionStartKey(key, regionStartKey []byte) bool {
 }
 
 func (s *KVStore) splitBatchRegionsReq(bo *Backoffer, keys [][]byte,
-	scatter bool, tableID *int64, encrypt bool) (*tikvrpc.Response, error) {
+	scatter bool, tableID *int64, encrypt uint32) (*tikvrpc.Response, error) {
 	// equalRegionStartKey is used to filter split keys.
 	// If the split key is equal to the start key of the region, then the key has been split, we need to skip the split key.
 	groups, _, err := s.regionCache.GroupKeysByRegion(bo, keys, equalRegionStartKey)
@@ -134,7 +134,7 @@ func (s *KVStore) splitBatchRegionsReq(bo *Backoffer, keys [][]byte,
 }
 
 func (s *KVStore) batchSendSingleRegion(bo *Backoffer, batch kvrpc.Batch,
-	scatter bool, tableID *int64, encrypt bool) kvrpc.BatchResult {
+	scatter bool, tableID *int64, encrypt uint32) kvrpc.BatchResult {
 	if val, err := util.EvalFailpoint("mockSplitRegionTimeout"); err == nil {
 		if val.(bool) {
 			if _, ok := bo.GetCtx().Deadline(); ok {
@@ -228,7 +228,7 @@ const (
 
 // SplitRegions splits regions by splitKeys.
 func (s *KVStore) SplitRegions(ctx context.Context, splitKeys [][]byte,
-	scatter bool, tableID *int64, encrypt bool) (regionIDs []uint64, err error) {
+	scatter bool, tableID *int64, encrypt uint32) (regionIDs []uint64, err error) {
 	bo := retry.NewBackofferWithVars(ctx, int(math.Min(float64(len(splitKeys))*splitRegionBackoff, maxSplitRegionsBackoff)), nil)
 	resp, err := s.splitBatchRegionsReq(bo, splitKeys, scatter, tableID, encrypt)
 	regionIDs = make([]uint64, 0, len(splitKeys))
