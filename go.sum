@@ -5,6 +5,8 @@ github.com/TonsnakeLin/kvproto v0.0.0-20230426124139-f36b9fcbe799 h1:DCRMHaSMwff
 github.com/TonsnakeLin/kvproto v0.0.0-20230426124139-f36b9fcbe799/go.mod h1:guCyM5N+o+ru0TsoZ1hi9lDjUMs2sIBjW3ARTEpVbnk=
 github.com/TonsnakeLin/kvproto v0.0.0-20230515074903-29d95052ecda h1:Yv/Wzk0ebXRJAydrVd3S99uMIFnbCdIR67hms965i2Y=
 github.com/TonsnakeLin/kvproto v0.0.0-20230515074903-29d95052ecda/go.mod h1:guCyM5N+o+ru0TsoZ1hi9lDjUMs2sIBjW3ARTEpVbnk=
+github.com/TonsnakeLin/kvproto v0.0.0-20230515142454-a97987cfaa8e h1:cfA420gTc50kRMOhtiQ3MEgD+JXkusz/ZkMO8vGT9NU=
+github.com/TonsnakeLin/kvproto v0.0.0-20230515142454-a97987cfaa8e/go.mod h1:guCyM5N+o+ru0TsoZ1hi9lDjUMs2sIBjW3ARTEpVbnk=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
