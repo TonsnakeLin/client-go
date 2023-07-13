@@ -130,12 +130,12 @@ func (s *testScanSuite) TestScan() {
 		s.Nil(err)
 		mockTableID := int64(999)
 		if rowNum > 123 {
-			_, err = s.store.SplitRegions(context.Background(), [][]byte{s.makeKey(123)}, false, &mockTableID)
+			_, err = s.store.SplitRegions(context.Background(), [][]byte{s.makeKey(123)}, false, &mockTableID, uint32(0))
 			s.Nil(err)
 		}
 
 		if rowNum > 456 {
-			_, err = s.store.SplitRegions(context.Background(), [][]byte{s.makeKey(456)}, false, &mockTableID)
+			_, err = s.store.SplitRegions(context.Background(), [][]byte{s.makeKey(456)}, false, &mockTableID, uint32(0))
 			s.Nil(err)
 		}
 
